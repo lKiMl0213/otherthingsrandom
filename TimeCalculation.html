@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <title>Divisão de Itens por Tempo</title>
+    <style>
+        :root {
+            --bg: #f5f5f5;
+            --fg: #222;
+            --box-bg: #fff;
+            --primary: #0077cc;
+            --primary-hover: #005fa3;
+            --border: #cccccc;
+        }
+        body.dark {
+            --bg: #121212;
+            --fg: #eaeaea;
+            --box-bg: #1e1e1e;
+            --primary: #3399ff;
+            --primary-hover: #1976d2;
+            --border: #3a3a3a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            color: var(--fg);
+            transition: background 0.3s, color 0.3s;
+        }
+        .box {
+            background: var(--box-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 520px;
+            transition: background 0.3s;
+        }
+        h1 { font-size: 20px; margin: 0 0 15px; text-align: center; }
+        label { display: block; margin-top: 12px; font-size: 14px; }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 6px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--box-bg);
+            color: var(--fg);
+            transition: background 0.3s, color 0.3s, border 0.3s;
+        }
+        button {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover { background: var(--primary-hover); }
+        .resultado { margin-top: 18px; font-weight: 500; text-align: center; }
+        .topbar { position: absolute; top: 15px; right: 20px; }
+        .toggle-btn {
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 13px;
+            border: none;
+            transition: background 0.3s;
+        }
+        .toggle-btn:hover { background: var(--primary-hover); }
+        .conta {
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 12px;
+            position: relative;
+        }
+        .conta .row { display: grid; grid-template-columns: 1fr; gap: 6px; }
+        .remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: crimson;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+        .remove-btn:hover { background: #b2001f; }
+        .actions { display: flex; gap: 8px; margin-top: 12px; }
+        .actions button { flex: 1; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <button class="toggle-btn" onclick="toggleModo()">🌙/☀️</button>
+    </div>
+
+    <div class="box">
+        <label for="seletor-idioma">Idioma:</label>
+        <select id="seletor-idioma" style="width:100%; padding:6px; margin-bottom:10px;">
+            <option value="de-DE">Deutsch</option>
+            <option value="en-US">English</option>
+            <option value="es-ES">Español</option>
+            <option value="fi-FI">Suomi</option>
+            <option value="fr-FR">Français</option>
+            <option value="pl-PL">Polski</option>
+            <option value="pt-BR">Português (BR)</option>
+            <option value="tr-TR">Türkçe</option>
+        </select>
+
+        <h1 id="titulo">Divisão de Itens</h1>
+        <label for="total" id="label-total">Quantidade total de itens:</label>
+        <input type="number" id="total" placeholder="Insira o Valor!" min="0" />
+
+        <div id="contas"></div>
+
+        <div class="actions">
+            <button id="btn-adicionar" onclick="adicionarConta()">+ Adicionar conta</button>
+            <button id="btn-calcular" onclick="calcular()">Calcular</button>
+        </div>
+
+        <div class="resultado" id="resultado"></div>
+    </div>
+
+    <script>
+        // Traduções
+        const textos = {
+            "pt-BR": {
+                titulo: "Divisão de Itens",
+                totalItens: "Quantidade total de itens:",
+                placeholderTotal: "Insira o Valor!",
+                adicionarConta: "+ Adicionar conta",
+                calcular: "Calcular",
+                tempoPorItem: "Tempo por item (Conta {letra} - seg) <small>[0 = desativado]</small>:",
+                nenhumaConta: "Nenhuma conta ativa!",
+                quantidadeZero: "Defina uma quantidade total de itens maior que zero.",
+                tempoAprox: "⏳ Tempo aproximado para terminar"
+            },
+            "en-US": {
+                titulo: "Item Distribution",
+                totalItens: "Total number of items:",
+                placeholderTotal: "Enter Value!",
+                adicionarConta: "+ Add Account",
+                calcular: "Calculate",
+                tempoPorItem: "Time per item (Account {letra} - sec) <small>[0 = disabled]</small>:",
+                nenhumaConta: "No active account!",
+                quantidadeZero: "Enter a total number of items greater than zero.",
+                tempoAprox: "⏳ Approximate time to finish"
+            },
+            "fi-FI": {
+                titulo: "Esineiden jakaminen",
+                totalItens: "Kohteiden kokonaismäärä:",
+                placeholderTotal: "Syötä arvo!",
+                adicionarConta: "+ Lisää tili",
+                calcular: "Laske",
+                tempoPorItem: "Aika per kohde (Tili {letra} - s) <small>[0 = pois käytöstä]</small>:",
+                nenhumaConta: "Ei aktiivisia tilejä!",
+                quantidadeZero: "Anna kohteiden kokonaismäärä, joka on suurempi kuin nolla.",
+                tempoAprox: "⏳ Arvioitu aika valmistumiseen"
+            },
+            "fr-FR": {
+                titulo: "Répartition des articles",
+                totalItens: "Nombre total d'articles:",
+                placeholderTotal: "Entrez la valeur!",
+                adicionarConta: "+ Ajouter un compte",
+                calcular: "Calculer",
+                tempoPorItem: "Temps par article (Compte {letra} - s) <small>[0 = désactivé]</small>:",
+                nenhumaConta: "Aucun compte actif!",
+                quantidadeZero: "Entrez un nombre total d'articles supérieur à zéro.",
+                tempoAprox: "⏳ Temps approximatif pour terminer"
+            },
+            "de-DE": {
+                titulo: "Artikelverteilung",
+                totalItens: "Gesamtanzahl der Artikel:",
+                placeholderTotal: "Wert eingeben!",
+                adicionarConta: "+ Konto hinzufügen",
+                calcular: "Berechnen",
+                tempoPorItem: "Zeit pro Artikel (Konto {letra} - s) <small>[0 = deaktiviert]</small>:",
+                nenhumaConta: "Keine aktiven Konten!",
+                quantidadeZero: "Geben Sie eine Gesamtanzahl von Artikeln größer als null ein.",
+                tempoAprox: "⏳ Ungefähre Fertigstellungszeit"
+            },
+            "pl-PL": {
+                titulo: "Podział przedmiotów",
+                totalItens: "Łączna liczba przedmiotów:",
+                placeholderTotal: "Wprowadź wartość!",
+                adicionarConta: "+ Dodaj konto",
+                calcular: "Oblicz",
+                tempoPorItem: "Czas na przedmiot (Konto {letra} - s) <small>[0 = wyłączone]</small>:",
+                nenhumaConta: "Brak aktywnych kont!",
+                quantidadeZero: "Wprowadź łączną liczbę przedmiotów większą niż zero.",
+                tempoAprox: "⏳ Szacowany czas do zakończenia"
+            },
+            "es-ES": {
+                titulo: "Distribución de artículos",
+                totalItens: "Cantidad total de artículos:",
+                placeholderTotal: "Ingrese valor!",
+                adicionarConta: "+ Agregar cuenta",
+                calcular: "Calcular",
+                tempoPorItem: "Tiempo por artículo (Cuenta {letra} - s) <small>[0 = desactivado]</small>:",
+                nenhumaConta: "¡No hay cuentas activas!",
+                quantidadeZero: "Ingrese una cantidad total de artículos mayor que cero.",
+                tempoAprox: "⏳ Tiempo aproximado para terminar"
+            },
+            "tr-TR": {
+                titulo: "Öğe Dağılımı",
+                totalItens: "Toplam öğe sayısı:",
+                placeholderTotal: "Değer girin!",
+                adicionarConta: "+ Hesap ekle",
+                calcular: "Hesapla",
+                tempoPorItem: "Öğe başına süre (Hesap {letra} - sn) <small>[0 = devre dışı]</small>:",
+                nenhumaConta: "Aktif hesap yok!",
+                quantidadeZero: "Sıfırdan büyük toplam öğe sayısı girin.",
+                tempoAprox: "⏳ Bitirme tahmini süresi"
+            }
+        };
+
+        // Detecta idioma do navegador
+        const idioma = navigator.language || "pt-BR";
+        const t = textos[idioma] || textos["pt-BR"];
+
+        // Seletor para testar idiomas manualmente
+        const seletor = document.getElementById("seletor-idioma");
+        seletor.value = idioma; // define o idioma inicial
+
+        seletor.addEventListener("change", () => {
+            const novoIdioma = seletor.value;
+            const novoT = textos[novoIdioma] || textos["pt-BR"];
+            Object.assign(t, novoT); // atualiza os textos
+            aplicarTextos();
+        });
+
+        // Contas iniciais
+        let contas = [{ tempo: 0 }, { tempo: 0 }];
+
+        // Atualiza textos da interface
+        function aplicarTextos() {
+            document.getElementById("titulo").textContent = t.titulo;
+            document.getElementById("label-total").textContent = t.totalItens;
+            document.getElementById("total").placeholder = t.placeholderTotal;
+            document.getElementById("btn-adicionar").textContent = t.adicionarConta;
+            document.getElementById("btn-calcular").textContent = t.calcular;
+            renderContas();
+        }
+
+        // Renderiza contas
+        function renderContas() {
+            const container = document.getElementById("contas");
+            container.innerHTML = "";
+
+            contas.forEach((c, i) => {
+                const letra = String.fromCharCode(65 + i);
+                const wrap = document.createElement("div");
+                wrap.className = "conta";
+
+                wrap.innerHTML = `
+                    <div class="row">
+                        <label for="tempo-${i}">${t.tempoPorItem.replace("{letra}", letra)}</label>
+                        <input type="number" step="0.1" min="0" id="tempo-${i}" placeholder="0">
+                    </div>
+                    <button class="remove-btn" ${contas.length <= 2 ? 'style="display:none"' : ""} onclick="removerConta(${i})">X</button>
+                `;
+
+                container.appendChild(wrap);
+
+                const input = wrap.querySelector("input");
+                input.value = c.tempo || "";
+                input.addEventListener("input", (e) => {
+                    const v = parseFloat(e.target.value);
+                    contas[i].tempo = isNaN(v) ? 0 : v;
+                });
+            });
+        }
+
+        function adicionarConta(tempo = 0) {
+            contas.push({ tempo });
+            renderContas();
+        }
+
+        function removerConta(idx) {
+            if (contas.length <= 2) return;
+            contas.splice(idx, 1);
+            renderContas();
+        }
+
+        function calcular() {
+            const total = parseFloat(document.getElementById("total").value) || 0;
+            const ativos = contas
+                .map((c, i) => ({ i, tempo: c.tempo }))
+                .filter(c => c.tempo > 0);
+            const resEl = document.getElementById("resultado");
+
+            if (total <= 0) { resEl.innerHTML = t.quantidadeZero; return; }
+            if (ativos.length === 0) { resEl.innerHTML = t.nenhumaConta; return; }
+
+            const rates = ativos.map(c => 1 / c.tempo);
+            const sumRates = rates.reduce((a, b) => a + b, 0);
+            const quotas = rates.map(r => (r / sumRates) * total);
+            let divisao = quotas.map(q => Math.floor(q));
+            let resto = total - divisao.reduce((a, b) => a + b, 0);
+
+            if (resto > 0) {
+                const ordem = quotas.map((q, i) => ({ i, frac: q - Math.floor(q) }))
+                                    .sort((a, b) => b.frac - a.frac);
+                for (let k = 0; k < resto; k++) divisao[ordem[k % ordem.length].i]++;
+            }
+
+            const temposFinais = divisao.map((n, i) => n * ativos[i].tempo);
+            const T = Math.max(...temposFinais);
+            const textoTempo = formatDuration(T);
+
+            let saida = "";
+            ativos.forEach((cAtivo, i) => {
+                const letra = String.fromCharCode(65 + i);
+                saida += `Conta ${letra}: ${divisao[i]} itens<br>`;
+            });
+            saida += `<br>${t.tempoAprox}: ${textoTempo}.`;
+            resEl.innerHTML = saida;
+        }
+
+        function formatDuration(sec) {
+            sec = Math.round(sec);
+            const h = Math.floor(sec / 3600);
+            const m = Math.floor((sec % 3600) / 60);
+            const s = sec % 60;
+            if (h > 0) return `${h} h ${m} min ${s} s`;
+            if (m > 0) return `${m} min ${s} s`;
+            return `${s} s`;
+        }
+
+        function toggleModo() {
+            document.body.classList.toggle("dark");
+            localStorage.setItem("modo", document.body.classList.contains("dark") ? "dark" : "light");
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            if (localStorage.getItem("modo") === "dark") document.body.classList.add("dark");
+            aplicarTextos();
+        });
+    </script>
+</body>
+</html>
