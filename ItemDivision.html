@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <title>Divisão de itens</title>
+    <style>
+        :root {
+            --bg: #f5f5f5;
+            --fg: #222;
+            --box-bg: #fff;
+            --primary: #0077cc;
+            --primary-hover: #005fa3;
+            --border: #cccccc;
+        }
+        body.dark {
+            --bg: #121212;
+            --fg: #eaeaea;
+            --box-bg: #1e1e1e;
+            --primary: #3399ff;
+            --primary-hover: #1976d2;
+            --border: #3a3a3a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            color: var(--fg);
+            transition: background 0.3s, color 0.3s;
+            padding: 20px;
+        }
+        .box {
+            background: var(--box-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            width: 100%;
+            max-width: 900px;
+            transition: background 0.3s;
+        }
+        h1 { font-size: 20px; margin: 0 0 12px; text-align: center; }
+        label { display: block; margin-top: 10px; font-size: 13px; }
+        input, select, button {
+            font-family: inherit;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 6px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--box-bg);
+            color: var(--fg);
+            transition: background 0.3s, color 0.3s, border 0.3s;
+        }
+        .row { display: flex; gap: 10px; align-items: center; }
+        .col { flex: 1; }
+        button {
+            padding: 8px 10px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background: var(--primary-hover); }
+        .topbar {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            display: flex;
+            align-items: center; /* alinha verticalmente todos os itens */
+            gap: 8px;
+        }
+
+        .topbar select {
+            height: 36px;             /* igual ao botão */
+            padding: 0 8px;
+            font-size: 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--box-bg);
+            color: var(--fg);
+            transition: background 0.3s, color 0.3s, border 0.3s;
+        }
+
+        .toggle-btn {
+            padding: 6px 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            flex-shrink: 0; /* não encolhe */
+        }
+
+        .toggle-btn:hover {
+            background: var(--primary-hover);
+            transform: scale(1.05);
+        }
+        .panel { border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-top: 12px; background: rgba(0,0,0,0.02); }
+        .small { font-size: 12px; color: gray; margin-left:6px; }
+        .list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+        .item-row, .account-row { display: grid; grid-template-columns: 1fr 140px 60px; gap: 8px; align-items:center; }
+        .item-row .label { font-weight: 600; font-size: 14px; }
+        .remove-btn {
+            background: crimson; color: #fff; border: none; border-radius: 6px; padding:6px 8px; cursor:pointer; font-size:12px;
+        }
+        .remove-btn:hover { background:#b2001f; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+        th, td { padding: 8px; border: 1px solid var(--border); text-align: center; }
+        .actions { display:flex; gap:8px; margin-top:12px; }
+        .muted { color: gray; font-size: 13px; }
+        @media (max-width:740px){
+            .item-row, .account-row { grid-template-columns: 1fr 110px 60px; }
+            .topbar { right: 12px; top: 10px; }
+        }
+
+        .sidebar {
+            height: 100vh;
+            width: 18%;          /* largura relativa à tela */
+            min-width: 220px;    /* largura mínima */
+            max-width: 300px;    /* largura máxima */
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: var(--box-bg);
+            border-right: 1px solid var(--border);
+            padding-top: 30px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s, background 0.3s, border 0.3s;
+        }
+
+        .sidebar h2 {
+            color: var(--fg);
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0 10px;
+            margin: 0;
+            flex: 1;
+        }
+
+        .sidebar ul li {
+            margin: 8px 0;
+        }
+
+        .sidebar ul li a {
+            color: var(--fg);
+            text-decoration: none;
+            padding: 10px 14px;
+            display: block;
+            border-radius: 8px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .sidebar ul li a:hover {
+            background-color: var(--primary);
+            color: #fff;
+        }
+
+        body.dark .sidebar {
+            background-color: var(--box-bg);
+            border-right: 1px solid var(--border);
+        }
+
+        body.dark .sidebar h2,
+        body.dark .sidebar ul li a {
+            color: var(--fg);
+        }
+
+        body.dark .sidebar ul li a:hover {
+            background-color: var(--primary);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <select id="seletor-idioma" style="padding:6px;">
+            <option value="pt-BR">Português (BR)</option>
+            <option value="en-US">English</option>
+            <option value="es-ES">Español</option>
+            <option value="fr-FR">Français</option>
+            <option value="de-DE">Deutsch</option>
+            <option value="fi-FI">Suomi</option>
+            <option value="pl-PL">Polski</option>
+            <option value="tr-TR">Türkçe</option>
+        </select>
+        <button class="toggle-btn" onclick="toggleModo()">🌙/☀️</button>
+    </div>
+
+    <!-- menu lateral -->
+        <div class="sidebar">
+            <h2>Menu</h2>
+            <ul>
+                <li><a href="TimeEstimated.html">Cálculo de tempo de coleta de item</a></li>
+                <li><a href="TimeCalculation.html">Cálculo de tempo de processamento de item</a></li>
+            </ul>
+        </div>
+
+    <div class="box">
+        <h1 id="titulo">Coleta de Itens</h1>
+
+        <div class="panel">
+            <div class="row">
+                <div style="width:220px">
+                    <label id="label-accounts">Quantidade de contas:</label>
+                    <div style="display:flex; gap:6px; margin-top:6px;">
+                        <button id="btn-dec-accounts" onclick="decreaseAccounts()">-</button>
+                        <input id="num-contas" type="number" min="2" step="1" value="2" style="width:60px; text-align:center;">
+                        <button id="btn-inc-accounts" onclick="increaseAccounts()">+</button>
+                    </div>
+                    <div class="small" style="margin-top:6px;" id="accounts-note"></div>
+                </div>
+                <div class="col" style="display:flex; align-items:center; gap:8px;">
+                    <!-- Espaço livre à direita (poderia ter filtros no futuro) -->
+                </div>
+            </div>
+
+            <label id="label-contas">Contas (defina % para cada conta — serão normalizadas)</label>
+            <div id="contas-list" class="list"></div>
+        </div>
+
+        <div class="panel" style="margin-top:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <label id="label-itens">Itens (A, B, C...)</label>
+                <div style="display:flex; gap:8px;">
+                    <button id="btn-add-item" onclick="adicionarItem()">+ Adicionar item</button>
+                    <button id="btn-remove-item" onclick="removerUltimoItem()">- Remover último</button>
+                </div>
+            </div>
+
+            <div id="itens-list" class="list"></div>
+            <div class="small">Cada item tem sua quantidade total — a distribuição será feita por porcentagem das contas.</div>
+        </div>
+
+        <div class="actions">
+            <button id="btn-calcular" onclick="calcular()">Calcular distribuição</button>
+            <button id="btn-salvar" onclick="salvarLocal()">Salvar (local)</button>
+            <button id="btn-resetar" onclick="resetar()">Resetar</button>
+        </div>
+
+        <div id="resultado-panel" class="panel" style="display:none;">
+            <div id="resultado-summary" class="muted"></div>
+            <div id="resultado-tabela"></div>
+        </div>
+    </div>
+
+    <script>
+        // Traduções
+        const textos = {
+            "pt-BR": {
+                titulo: "Divisão de itens",
+                labelAccounts: "Quantidade de contas:",
+                accountsNote: "Mínimo 2 contas. % será normalizado se necessário.",
+                labelContas: "Contas (defina % por conta)",
+                pctHint: "Defina a porcentagem (soma será normalizada)",
+                itens: "Itens (A, B, C...)",
+                adicionarItem: "+ Adicionar item",
+                removerItem: "- Remover último",
+                calcular: "Calcular distribuição",
+                salvar: "Salvar (local)",
+                resetar: "Resetar",
+                resultado: "Resultado",
+                semItens: "Adicione pelo menos um item com quantidade > 0.",
+                semContas: "É necessário no mínimo 2 contas.",
+                porcentagensInvalidas: "Todas as porcentagens estão zeradas — defina pelo menos uma > 0.",
+                totalItens: "Total itens",
+                contaCol: "Conta",
+                totalConta: "Total por conta",
+                porcentagemReal: "Porcentagem real",
+                namePlaceholder: "Nome da conta"
+            },
+            "en-US": {
+                titulo: "Item Division",
+                labelAccounts: "Number of accounts:",
+                accountsNote: "Minimum 2 accounts. % will be normalized if needed.",
+                labelContas: "Accounts (set % per account)",
+                pctHint: "Set percentage (sum will be normalized)",
+                itens: "Items (A, B, C...)",
+                adicionarItem: "+ Add item",
+                removerItem: "- Remove last",
+                calcular: "Calculate distribution",
+                salvar: "Save (local)",
+                resetar: "Reset",
+                resultado: "Result",
+                semItens: "Add at least one item with quantity > 0.",
+                semContas: "At least 2 accounts required.",
+                porcentagensInvalidas: "All percentages are zero — set at least one > 0.",
+                totalItens: "Total items",
+                contaCol: "Account",
+                totalConta: "Total per account",
+                porcentagemReal: "Real percentage",
+                namePlaceholder: "Account name"
+            },
+            "es-ES": {
+                titulo: "División de ítems",
+                labelAccounts: "Cantidad de cuentas:",
+                accountsNote: "Mínimo 2 cuentas. % se normalizará si es necesario.",
+                labelContas: "Cuentas (defina % por cuenta)",
+                pctHint: "Establezca el porcentaje (la suma se normalizará)",
+                itens: "Artículos (A, B, C...)",
+                adicionarItem: "+ Agregar artículo",
+                removerItem: "- Eliminar último",
+                calcular: "Calcular distribución",
+                salvar: "Guardar (local)",
+                resetar: "Reiniciar",
+                resultado: "Resultado",
+                semItens: "Agrega al menos un artículo con cantidad > 0.",
+                semContas: "Se requieren al menos 2 cuentas.",
+                porcentagensInvalidas: "Todas las porcentajes son cero — establezca al menos uno > 0.",
+                totalItens: "Total artículos",
+                contaCol: "Cuenta",
+                totalConta: "Total por cuenta",
+                porcentagemReal: "Porcentaje real",
+                namePlaceholder: "Nombre de la cuenta"
+            },
+            "fr-FR": {
+                titulo: "Répartition des articles",
+                labelAccounts: "Nombre de comptes:",
+                accountsNote: "Minimum 2 comptes. % sera normalisé si nécessaire.",
+                labelContas: "Comptes (définissez % par compte)",
+                pctHint: "Définissez le pourcentage (la somme sera normalisée)",
+                itens: "Articles (A, B, C...)",
+                adicionarItem: "+ Ajouter un article",
+                removerItem: "- Supprimer dernier",
+                calcular: "Calculer la répartition",
+                salvar: "Sauvegarder (local)",
+                resetar: "Réinitialiser",
+                resultado: "Résultat",
+                semItens: "Ajoutez au moins un article avec quantité > 0.",
+                semContas: "Au moins 2 comptes requis.",
+                porcentagensInvalidas: "Tous les pourcentages sont zéro — définissez au moins un > 0.",
+                totalItens: "Total articles",
+                contaCol: "Compte",
+                totalConta: "Total par compte",
+                porcentagemReal: "Pourcentage réel",
+                namePlaceholder: "Nom du compte"
+            },
+            "de-DE": {
+                titulo: "Aufteilung der Gegenstände",
+                labelAccounts: "Anzahl der Konten:",
+                accountsNote: "Mind. 2 Konten. % wird bei Bedarf normalisiert.",
+                labelContas: "Konten (Setzen Sie % pro Konto)",
+                pctHint: "Setzen Sie den Prozentsatz (Summe wird normalisiert)",
+                itens: "Artikel (A, B, C...)",
+                adicionarItem: "+ Artikel hinzufügen",
+                removerItem: "- Letzten entfernen",
+                calcular: "Verteilung berechnen",
+                salvar: "Speichern (lokal)",
+                resetar: "Zurücksetzen",
+                resultado: "Ergebnis",
+                semItens: "Fügen Sie mindestens einen Artikel mit Menge > 0 hinzu.",
+                semContas: "Mindestens 2 Konten erforderlich.",
+                porcentagensInvalidas: "Alle Prozente sind null — setzen Sie mindestens eines > 0.",
+                totalItens: "Gesamt Artikel",
+                contaCol: "Konto",
+                totalConta: "Summe pro Konto",
+                porcentagemReal: "Tatsächlicher Prozentsatz",
+                namePlaceholder: "Kontoname"
+            },
+            "fi-FI": {
+                titulo: "Esineiden jako",
+                labelAccounts: "Tilien määrä:",
+                accountsNote: "Vähintään 2 tiliä. % normalisoidaan tarvittaessa.",
+                labelContas: "Tilit (aseta % per tili)",
+                pctHint: "Aseta prosenttiosuus (summa normalisoidaan)",
+                itens: "Esineet (A, B, C...)",
+                adicionarItem: "+ Lisää esine",
+                removerItem: "- Poista viimeinen",
+                calcular: "Laske jakautuminen",
+                salvar: "Tallenna (paikallinen)",
+                resetar: "Nollaa",
+                resultado: "Tulos",
+                semItens: "Lisää vähintään yksi esine, jonka määrä > 0.",
+                semContas: "Vähintään 2 tiliä vaaditaan.",
+                porcentagensInvalidas: "Kaikki prosentit ovat nolla — aseta vähintään yksi > 0.",
+                totalItens: "Esineiden kokonaismäärä",
+                contaCol: "Tili",
+                totalConta: "Kokonaismäärä per tili",
+                porcentagemReal: "Todellinen prosenttiosuus",
+                namePlaceholder: "Tilin nimi"
+            },
+            "pl-PL": {
+                titulo: "Podział przedmiotów",
+                labelAccounts: "Liczba kont:",
+                accountsNote: "Minimum 2 konta. % zostanie znormalizowane, jeśli to konieczne.",
+                labelContas: "Konta (ustaw % dla konta)",
+                pctHint: "Ustaw procent (suma zostanie znormalizowana)",
+                itens: "Przedmioty (A, B, C...)",
+                adicionarItem: "+ Dodaj przedmiot",
+                removerItem: "- Usuń ostatni",
+                calcular: "Oblicz dystrybucję",
+                salvar: "Zapisz (lokalnie)",
+                resetar: "Resetuj",
+                resultado: "Wynik",
+                semItens: "Dodaj co najmniej jeden przedmiot z ilością > 0.",
+                semContas: "Wymagane minimum 2 konta.",
+                porcentagensInvalidas: "Wszystkie procenty są zerowe — ustaw przynajmniej jeden > 0.",
+                totalItens: "Łączna liczba przedmiotów",
+                contaCol: "Konto",
+                totalConta: "Łącznie na konto",
+                porcentagemReal: "Rzeczywisty procent",
+                namePlaceholder: "Nazwa konta"
+            },
+            "tr-TR": {
+                titulo: "Öğe Bölümü",
+                labelAccounts: "Hesap sayısı:",
+                accountsNote: "Minimum 2 hesap. Gerekirse % normalize edilecektir.",
+                labelContas: "Hesaplar (her hesap için % belirleyin)",
+                pctHint: "Yüzdeyi belirleyin (toplam normalize edilecektir)",
+                itens: "Öğeler (A, B, C...)",
+                adicionarItem: "+ Öğe ekle",
+                removerItem: "- Sonuncuyu kaldır",
+                calcular: "Dağılımı hesapla",
+                salvar: "Kaydet (yerel)",
+                resetar: "Sıfırla",
+                resultado: "Sonuç",
+                semItens: "Miktarı > 0 olan en az bir öğe ekleyin.",
+                semContas: "En az 2 hesap gerekli.",
+                porcentagensInvalidas: "Tüm yüzdeler sıfır — en az birini > 0 olarak ayarlayın.",
+                totalItens: "Toplam öğe",
+                contaCol: "Hesap",
+                totalConta: "Hesap başına toplam",
+                porcentagemReal: "Gerçek yüzde",
+                namePlaceholder: "Hesap adı"
+            }
+        };
+
+        // Estado
+        let idioma = navigator.language || "pt-BR";
+        idioma = ["pt-BR","en-US","es-ES","fr-FR","de-DE","fi-FI","pl-PL","tr-TR"].includes(idioma) ? idioma : "pt-BR";
+        const seletor = document.getElementById("seletor-idioma");
+        seletor.value = idioma;
+
+        function t() { return textos[idioma] || textos["pt-BR"]; }
+
+        // Dados de contas e itens
+        let contas = [];
+        let itens = [];
+
+        // inicialização
+        function init() {
+            loadLocal();
+            if (contas.length < 2) {
+                contas = [{ name: "Conta 1", pct: 50 }, { name: "Conta 2", pct: 50 }];
+            }
+            if (itens.length === 0) {
+                itens = [{ label: "A", qty: 10 }, { label: "B", qty: 5 }];
+            }
+            document.getElementById("num-contas").value = contas.length;
+            aplicarTextos();
+            renderContas();
+            renderItens();
+        }
+
+        // Traduções e textos UI
+        function aplicarTextos() {
+            document.getElementById("titulo").textContent = t().titulo;
+            document.getElementById("label-itens").textContent = t().itens;
+            document.getElementById("label-accounts").textContent = t().labelAccounts;
+            document.getElementById("accounts-note").textContent = t().accountsNote;
+            document.getElementById("label-contas").textContent = t().labelContas;
+
+            // botões
+            document.getElementById("btn-add-item").textContent = t().adicionarItem;
+            document.getElementById("btn-remove-item").textContent = t().removerItem;
+            document.getElementById("btn-calcular").textContent = t().calcular;
+            document.getElementById("btn-salvar").textContent = t().salvar;
+            document.getElementById("btn-resetar").textContent = t().resetar;
+            document.getElementById("btn-inc-accounts").textContent = "+";
+            document.getElementById("btn-dec-accounts").textContent = "-";
+
+            // re-render para aplicar textos nas contas/itens (hints)
+            renderContas();
+            renderItens();
+        }
+
+        seletor.addEventListener("change", () => {
+            idioma = seletor.value;
+            aplicarTextos();
+        });
+
+        // RENDER contas (agora com campo para nome)
+        function renderContas() {
+            const container = document.getElementById("contas-list");
+            container.innerHTML = "";
+            contas.forEach((c, i) => {
+                const div = document.createElement("div");
+                div.className = "account-row panel";
+                div.style.gridTemplateColumns = "1fr 120px 60px";
+                div.innerHTML = `
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <input type="text" id="name-${i}" placeholder="${t().namePlaceholder}" value="${escapeHtml(c.name)}" />
+                        <div class="small">${t().pctHint}</div>
+                    </div>
+                    <div>
+                        <input type="number" min="0" step="0.1" id="pct-${i}" value="${c.pct}" />
+                    </div>
+                    <div>
+                        <button class="remove-btn" id="rmc-${i}">X</button>
+                    </div>
+                `;
+                container.appendChild(div);
+
+                // eventos
+                document.getElementById(`pct-${i}`).addEventListener("input", (e) => {
+                    const v = parseFloat(e.target.value);
+                    contas[i].pct = isNaN(v) ? 0 : v;
+                });
+                document.getElementById(`name-${i}`).addEventListener("input", (e) => {
+                    contas[i].name = e.target.value || `Conta ${i+1}`;
+                });
+
+                const btnRm = document.getElementById(`rmc-${i}`);
+                btnRm.addEventListener("click", () => {
+                    if (contas.length <= 2) return alert(t().semContas);
+                    contas.splice(i,1);
+                    // ajustar nomes existentes para manter ordem, mas não sobrescrever nomes personalizados
+                    ensureDefaultNames();
+                    document.getElementById("num-contas").value = contas.length;
+                    renderContas();
+                });
+            });
+        }
+
+        // garante nomes padrao apenas se faltarem
+        function ensureDefaultNames(){
+            for (let i=0;i<contas.length;i++){
+                if (!contas[i].name || contas[i].name.trim()==="") contas[i].name = `Conta ${i+1}`;
+            }
+        }
+
+        function increaseAccounts() {
+            const val = Math.max(2, Math.min(50, parseInt(document.getElementById("num-contas").value||2) + 1));
+            document.getElementById("num-contas").value = val;
+            ajustarContas(val);
+        }
+        function decreaseAccounts(){
+            const val = Math.max(2, Math.min(50, parseInt(document.getElementById("num-contas").value||2) - 1));
+            document.getElementById("num-contas").value = val;
+            ajustarContas(val);
+        }
+
+        document.getElementById("num-contas").addEventListener("change", (e) => {
+            let v = parseInt(e.target.value || 2);
+            if (isNaN(v) || v < 2) v = 2;
+            if (v > 50) v = 50;
+            e.target.value = v;
+            ajustarContas(v);
+        });
+
+        function ajustarContas(n) {
+            const atual = contas.length;
+            if (n > atual) {
+                const pad = n - atual;
+                for (let i=0;i<pad;i++){
+                    contas.push({ name: `Conta ${contas.length+1}`, pct: 0 });
+                }
+            } else if (n < atual) {
+                contas.length = n;
+            }
+            ensureDefaultNames();
+            renderContas();
+        }
+
+        // RENDER itens
+        function renderItens() {
+            const container = document.getElementById("itens-list");
+            container.innerHTML = "";
+            // garantir rótulos A,B,C...
+            itens.forEach((it, i) => it.label = String.fromCharCode(65 + i));
+            itens.forEach((it, i) => {
+                const row = document.createElement("div");
+                row.className = "item-row panel";
+                row.innerHTML = `
+                    <div class="label">${it.label}</div>
+                    <div><input type="number" min="0" step="1" id="qty-${i}" value="${it.qty}" /></div>
+                    <div><button class="remove-btn" id="rmit-${i}">X</button></div>
+                `;
+                container.appendChild(row);
+
+                document.getElementById(`qty-${i}`).addEventListener("input", (e) => {
+                    const v = parseInt(e.target.value);
+                    itens[i].qty = isNaN(v) ? 0 : v;
+                });
+
+                document.getElementById(`rmit-${i}`).addEventListener("click", () => {
+                    itens.splice(i,1);
+                    renderItens();
+                });
+            });
+        }
+
+        function adicionarItem(qty=0) {
+            itens.push({ label: "", qty: qty });
+            renderItens();
+        }
+        function removerUltimoItem(){
+            if (itens.length>0) itens.pop();
+            renderItens();
+        }
+
+        // Cálculo da distribuição (por porcentagem normalizada)
+        function calcular() {
+            if (contas.length < 2) { alert(t().semContas); return; }
+            const totalItens = itens.reduce((s,i)=> s + (Number(i.qty)||0), 0);
+            if (totalItens === 0) { alert(t().semItens); return; }
+
+            const pctArr = contas.map(c => Number(c.pct) || 0);
+            const sumPct = pctArr.reduce((a,b)=>a+b,0);
+            if (sumPct === 0) { alert(t().porcentagensInvalidas); return; }
+
+            // normalizar proporções
+            const props = pctArr.map(p => p / sumPct);
+
+            // resultado: matriz itens x contas (inteiros)
+            const tabela = [];
+            const totalsPerAccount = Array(contas.length).fill(0);
+
+            itens.forEach((it, idx) => {
+                const Q = Math.max(0, Math.floor(Number(it.qty) || 0));
+                const quotasFloat = props.map(p => p * Q);
+                const quotaInt = quotasFloat.map(q => Math.floor(q));
+                let resto = Q - quotaInt.reduce((a,b)=>a+b,0);
+
+                const ordem = quotasFloat.map((q,i)=>({i, frac: q - Math.floor(q)})).sort((a,b)=> b.frac - a.frac);
+                for (let r=0; r<resto; r++) {
+                    quotaInt[ordem[r % ordem.length].i]++;
+                }
+
+                tabela.push({ item: it.label, total: Q, distrib: quotaInt.slice() });
+                quotaInt.forEach((v,i)=> totalsPerAccount[i]+=v);
+            });
+
+            // montar HTML de saída
+            const resultadoPanel = document.getElementById("resultado-panel");
+            resultadoPanel.style.display = "block";
+            const resumoEl = document.getElementById("resultado-summary");
+            resumoEl.innerHTML = `${t().totalItens}: <strong>${totalItens}</strong>.`;
+
+            let html = `<table><thead><tr><th>${t().totalItens}</th>`;
+            contas.forEach((c,i)=> html += `<th>${escapeHtml(c.name)}<div class="small">${(Math.round(props[i]*100*100)/100).toFixed(2)}%</div></th>`);
+            html += `</tr></thead><tbody>`;
+
+            tabela.forEach(row => {
+                html += `<tr><td style="text-align:left; font-weight:600;">Item ${row.item} (qtd ${row.total})</td>`;
+                row.distrib.forEach((v,i)=> {
+                    html += `<td>${v}</td>`;
+                });
+                html += `</tr>`;
+            });
+
+            html += `<tr style="background:rgba(0,0,0,0.03)"><td style="font-weight:700;">${t().totalConta}</td>`;
+            totalsPerAccount.forEach((tot,i)=>{
+                const percReal = totalItens ? (tot/totalItens*100) : 0;
+                html += `<td><strong>${tot}</strong><div class="small">${t().porcentagemReal}: ${percReal.toFixed(2)}%</div></td>`;
+            });
+            html += `</tr>`;
+
+            html += `</tbody></table>`;
+
+            document.getElementById("resultado-tabela").innerHTML = html;
+            window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        }
+
+        // SALVAR / CARREGAR local
+        function salvarLocal() {
+            // atualizar estado atual a partir dos inputs
+            syncInputsToState();
+            const data = { contas, itens, dark: document.body.classList.contains("dark"), idioma };
+            localStorage.setItem("divisao_itens_v2", JSON.stringify(data));
+            alert("Salvo localmente.");
+        }
+        function loadLocal() {
+            try {
+                const raw = localStorage.getItem("divisao_itens_v2");
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (parsed) {
+                    contas = parsed.contas || [];
+                    itens = parsed.itens || [];
+                    if (parsed.dark) document.body.classList.add("dark");
+                    if (parsed.idioma) { idioma = parsed.idioma; seletor.value = idioma; }
+                }
+            } catch(e){ console.warn("erro load", e); }
+        }
+
+        function resetar() {
+            if (!confirm("Resetar dados locais e recarregar?")) return;
+            localStorage.removeItem("divisao_itens_v2");
+            contas = [{ name: "Conta 1", pct: 50 }, { name: "Conta 2", pct: 50 }];
+            itens = [{ label: "A", qty: 10 }];
+            document.body.classList.remove("dark");
+            document.getElementById("num-contas").value = contas.length;
+            renderContas();
+            renderItens();
+            document.getElementById("resultado-panel").style.display = "none";
+        }
+
+        // dark mode toggle (persist)
+        function toggleModo() {
+            document.body.classList.toggle("dark");
+            try { localStorage.setItem("modo", document.body.classList.contains("dark") ? "dark" : "light"); } catch(e){}
+        }
+
+        // sincroniza inputs para o estado antes de salvar
+        function syncInputsToState(){
+            for (let i=0;i<contas.length;i++){
+                const elName = document.getElementById(`name-${i}`);
+                const elPct = document.getElementById(`pct-${i}`);
+                if (elName) contas[i].name = elName.value || `Conta ${i+1}`;
+                if (elPct) contas[i].pct = Number(elPct.value) || 0;
+            }
+            for (let i=0;i<itens.length;i++){
+                const elQty = document.getElementById(`qty-${i}`);
+                if (elQty) itens[i].qty = Number(elQty.value) || 0;
+            }
+        }
+
+        // salvar alterações periódicas (debounced rudimentar)
+        let saveTimeout = null;
+        setInterval(()=> {
+            syncInputsToState();
+            if (saveTimeout) clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(()=> {
+                try {
+                    const data = { contas, itens, dark: document.body.classList.contains("dark"), idioma };
+                    localStorage.setItem("divisao_itens_v2", JSON.stringify(data));
+                } catch(e){}
+            }, 500);
+        }, 1500);
+
+        // util
+        function escapeHtml(str){
+            if (str==null) return "";
+            return String(str).replace(/[&<>\"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; });
+        }
+
+        // inicializar
+        window.addEventListener("DOMContentLoaded", () => {
+            const modo = localStorage.getItem("modo");
+            if (modo === "dark") document.body.classList.add("dark");
+            init();
+        });
+    </script>
+</body>
+</html>
